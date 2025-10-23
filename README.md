@@ -99,4 +99,4 @@ MIT License - feel free to use for learning and projects.
 **Ililo Altaye** - [GitHub](https://github.com/ililo24)
 
 --
-⭐ **Star this repo if you found it helpful*
+⭐ **Star this repo if you found it helpful**
