@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Performance - Music Recommendation Engine</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <i class="fas fa-music"></i> Music Recommendation Engine
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('upload_data') }}">Upload Data</a>
+                <a class="nav-link" href="{{ url_for('train_model_route') }}">Train Model</a>
+                <a class="nav-link" href="{{ url_for('get_recommendations') }}">Get Recommendations</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <h2><i class="fas fa-chart-line"></i> Model Performance</h2>
+                
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Performance Metrics -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-line fa-2x mb-2"></i>
+                                <h3>{{ "%.3f"|format(metrics.r2) }}</h3>
+                                <p class="mb-0">R² Score</p>
+                                <small>Higher is better</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-bullseye fa-2x mb-2"></i>
+                                <h3>{{ "%.2f"|format(metrics.mae) }}</h3>
+                                <p class="mb-0">Mean Absolute Error</p>
+                                <small>Lower is better</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-square-root-alt fa-2x mb-2"></i>
+                                <h3>{{ "%.2f"|format(metrics.rmse) }}</h3>
+                                <p class="mb-0">Root Mean Square Error</p>
+                                <small>Lower is better</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body text-center">
+                                <i class="fas fa-percentage fa-2x mb-2"></i>
+                                <h3>{{ "%.1f"|format(metrics.mape) }}%</h3>
+                                <p class="mb-0">Mean Absolute Percentage Error</p>
+                                <small>Lower is better</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cross-Validation Results -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-check-circle"></i> Cross-Validation Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>R² Score (5-fold CV):</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ (metrics.cv_r2_mean * 100) | round }}%"
+                                         aria-valuenow="{{ metrics.cv_r2_mean }}" 
+                                         aria-valuemin="0" aria-valuemax="1">
+                                        {{ "%.3f"|format(metrics.cv_r2_mean) }}
+                                    </div>
+                                </div>
+                                <small class="text-muted">Mean: {{ "%.3f"|format(metrics.cv_r2_mean) }} ± {{ "%.3f"|format(metrics.cv_r2_std) }}</small>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Model Stability:</h6>
+                                {% if metrics.cv_r2_std < 0.05 %}
+                                    <span class="badge bg-success">Very Stable</span>
+                                {% elif metrics.cv_r2_std < 0.1 %}
+                                    <span class="badge bg-warning">Stable</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unstable</span>
+                                {% endif %}
+                                <p class="mt-2"><small class="text-muted">Standard deviation: {{ "%.3f"|format(metrics.cv_r2_std) }}</small></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Performance Interpretation -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-lightbulb"></i> Performance Interpretation</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>R² Score Analysis:</h6>
+                                {% if metrics.r2 > 0.8 %}
+                                    <div class="alert alert-success">
+                                        <strong>Excellent!</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
+                                    </div>
+                                {% elif metrics.r2 > 0.6 %}
+                                    <div class="alert alert-info">
+                                        <strong>Good!</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
+                                    </div>
+                                {% elif metrics.r2 > 0.4 %}
+                                    <div class="alert alert-warning">
+                                        <strong>Fair.</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-danger">
+                                        <strong>Needs improvement.</strong> Your model explains only {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance.
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Error Analysis:</h6>
+                                <p><strong>Mean Absolute Error:</strong> {{ "%.2f"|format(metrics.mae) }} points</p>
+                                <p><strong>Root Mean Square Error:</strong> {{ "%.2f"|format(metrics.rmse) }} points</p>
+                                <p><strong>Average Error:</strong> {{ "%.1f"|format(metrics.mape) }}%</p>
+                                
+                                {% if metrics.mape < 10 %}
+                                    <div class="alert alert-success">
+                                        <strong>Low error!</strong> Predictions are very accurate.
+                                    </div>
+                                {% elif metrics.mape < 20 %}
+                                    <div class="alert alert-info">
+                                        <strong>Moderate error.</strong> Predictions are reasonably accurate.
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        <strong>High error.</strong> Consider improving your model or data quality.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="text-center">
+                    <a href="{{ url_for('get_recommendations') }}" class="btn btn-success btn-lg me-3">
+                        <i class="fas fa-magic"></i> Get Recommendations
+                    </a>
+                    <a href="{{ url_for('train_model_route') }}" class="btn btn-secondary btn-lg">
+                        <i class="fas fa-redo"></i> Retrain Model
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
