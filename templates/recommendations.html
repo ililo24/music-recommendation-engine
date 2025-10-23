@@ -3,146 +3,406 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Get Recommendations - Music Recommendation Engine</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>🔮 Get Recommendations - MelodyAI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-glow {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .score-display {
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+            margin: 2rem 0;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            background: conic-gradient(from 0deg, #4CAF50 0deg, #4CAF50 var(--score-angle), rgba(255, 255, 255, 0.1) var(--score-angle));
+        }
+
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+        }
+
+        .score-text {
+            position: relative;
+            z-index: 1;
+            font-size: 3rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .recommendation-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .recommendation-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .track-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .track-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            background: var(--secondary-gradient);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1.5rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .track-details h5 {
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .track-details p {
+            margin-bottom: 0;
+            opacity: 0.8;
+        }
+
+        .score-badge {
+            background: var(--success-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .interpretation-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .chart-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .input-group .form-control {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 15px;
+        }
+
+        .input-group .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .input-group .form-control:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            color: white;
+            box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.1);
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-music"></i> Music Recommendation Engine
+                <i class="fas fa-music me-2"></i>MelodyAI
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('upload_data') }}">Upload Data</a>
-                <a class="nav-link" href="{{ url_for('train_model_route') }}">Train Model</a>
-                <a class="nav-link" href="{{ url_for('get_recommendations') }}">Get Recommendations</a>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+                <a class="nav-link" href="{{ url_for('upload_data') }}">
+                    <i class="fas fa-upload me-1"></i>Upload Data
+                </a>
+                <a class="nav-link" href="{{ url_for('train_model_route') }}">
+                    <i class="fas fa-brain me-1"></i>Train Model
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 pt-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-magic"></i> Get Music Recommendations</h3>
-                    </div>
-                    <div class="card-body">
-                        {% with messages = get_flashed_messages() %}
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
+            <div class="col-lg-10">
+                <div class="text-center mb-5">
+                    <h1 class="text-white mb-3">
+                        <i class="fas fa-magic me-2"></i>Get Your Music Recommendations
+                    </h1>
+                    <p class="text-white-50">Discover your next favorite song with AI-powered precision</p>
+                </div>
 
-                        <form method="POST">
-                            <div class="mb-4">
-                                <label for="track_id" class="form-label">Track ID *</label>
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                                <i class="fas fa-exclamation-triangle me-2"></i>{{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Input Form -->
+                <div class="glass-card p-5 mb-4">
+                    <form method="POST" id="recommendationForm">
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <label for="track_id" class="form-label text-white">
+                                    <i class="fas fa-music me-2"></i>Track ID *
+                                </label>
                                 <input type="text" class="form-control" id="track_id" name="track_id" 
                                        placeholder="e.g., track_001" required>
-                                <div class="form-text">Enter the unique identifier for the track</div>
                             </div>
-
-                            <div class="mb-4">
-                                <label for="artist" class="form-label">Artist Name</label>
+                            <div class="col-md-6">
+                                <label for="artist" class="form-label text-white">
+                                    <i class="fas fa-user me-2"></i>Artist Name
+                                </label>
                                 <input type="text" class="form-control" id="artist" name="artist" 
                                        placeholder="e.g., Artist Name">
-                                <div class="form-text">Optional: Artist name for better context</div>
                             </div>
+                        </div>
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-glow btn-lg">
+                                <i class="fas fa-search me-2"></i>Get Recommendation Score
+                            </button>
+                        </div>
+                    </form>
+                </div>
 
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-search"></i> Get Recommendation Score
-                                </button>
+                <!-- Loading State -->
+                <div class="glass-card p-5 text-center" id="loadingState" style="display: none;">
+                    <div class="loading-spinner mb-3"></div>
+                    <h4 class="text-white mb-2">Analyzing Your Music Taste...</h4>
+                    <p class="text-white-50">Our AI is calculating your preference score</p>
+                </div>
+
+                <!-- Results -->
+                {% if prediction is defined %}
+                <div class="glass-card p-5" id="results">
+                    <!-- Score Display -->
+                    <div class="text-center mb-5">
+                        <div class="score-circle" style="--score-angle: {{ (prediction * 3.6) }}deg;">
+                            <div class="score-text">{{ "%.1f"|format(prediction) }}</div>
+                        </div>
+                        <h3 class="text-white mt-3">Preference Score</h3>
+                        <p class="text-white-50">Out of 100 points</p>
+                    </div>
+
+                    <!-- Track Information -->
+                    <div class="recommendation-card">
+                        <div class="track-info">
+                            <div class="track-icon">
+                                <i class="fas fa-music"></i>
                             </div>
-                        </form>
-
-                        {% if prediction is defined %}
-                            <hr class="my-4">
-                            
-                            <div class="alert alert-success">
-                                <h5><i class="fas fa-star"></i> Recommendation Result</h5>
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <p><strong>Track ID:</strong> {{ track_id }}</p>
-                                        <p><strong>Artist:</strong> {{ artist or 'N/A' }}</p>
-                                    </div>
-                                    <div class="col-md-6 text-end">
-                                        <h2 class="text-success">{{ "%.1f"|format(prediction) }}</h2>
-                                        <p class="mb-0">Preference Score (0-100)</p>
-                                    </div>
-                                </div>
+                            <div class="track-details">
+                                <h5>{{ track_id }}</h5>
+                                <p>{{ artist or 'Unknown Artist' }}</p>
                             </div>
-
-                            <!-- Score Interpretation -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6><i class="fas fa-info-circle"></i> Score Interpretation</h6>
-                                </div>
-                                <div class="card-body">
-                                    {% if prediction > 80 %}
-                                        <div class="alert alert-success">
-                                            <strong>Excellent Match!</strong> This track has a very high preference score. You're likely to enjoy this music.
-                                        </div>
-                                    {% elif prediction > 60 %}
-                                        <div class="alert alert-info">
-                                            <strong>Good Match!</strong> This track has a good preference score. You'll probably like this music.
-                                        </div>
-                                    {% elif prediction > 40 %}
-                                        <div class="alert alert-warning">
-                                            <strong>Moderate Match.</strong> This track has an average preference score. You might enjoy it.
-                                        </div>
-                                    {% else %}
-                                        <div class="alert alert-danger">
-                                            <strong>Low Match.</strong> This track has a low preference score. You might not enjoy this music.
-                                        </div>
-                                    {% endif %}
-                                    
-                                    <p class="mb-0"><small class="text-muted">
-                                        The preference score is based on your listening patterns, completion rates, and engagement behavior.
-                                    </small></p>
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        <hr class="my-4">
-
-                        <h5>How It Works:</h5>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>Input Features:</h6>
-                                <ul>
-                                    <li>Track ID (required)</li>
-                                    <li>Artist name (optional)</li>
-                                    <li>Current time context</li>
-                                    <li>Default audio features</li>
-                                </ul>
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Prediction Process:</h6>
-                                <ol>
-                                    <li>Feature engineering</li>
-                                    <li>Model prediction</li>
-                                    <li>Score interpretation</li>
-                                    <li>Recommendation</li>
-                                </ol>
+                            <div class="ms-auto">
+                                <span class="score-badge">{{ "%.1f"|format(prediction) }}% Match</span>
                             </div>
                         </div>
 
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-lightbulb"></i> Tips for Better Recommendations:</h6>
-                            <ul class="mb-0">
-                                <li>Use actual track IDs from your listening history</li>
-                                <li>Include artist names when available</li>
-                                <li>Try different tracks to see score variations</li>
-                                <li>Higher scores indicate better matches</li>
-                            </ul>
+                        <!-- Interpretation -->
+                        <div class="interpretation-card">
+                            <h6 class="text-white mb-3">
+                                <i class="fas fa-lightbulb me-2"></i>What This Score Means
+                            </h6>
+                            {% if prediction > 80 %}
+                                <div class="alert alert-success">
+                                    <strong>🎉 Excellent Match!</strong> This track has a very high preference score. You're likely to absolutely love this music!
+                                </div>
+                            {% elif prediction > 60 %}
+                                <div class="alert alert-info">
+                                    <strong>👍 Good Match!</strong> This track has a solid preference score. You'll probably enjoy this music quite a bit.
+                                </div>
+                            {% elif prediction > 40 %}
+                                <div class="alert alert-warning">
+                                    <strong>🤔 Moderate Match.</strong> This track has an average preference score. You might enjoy it, but it's not a guaranteed hit.
+                                </div>
+                            {% else %}
+                                <div class="alert alert-danger">
+                                    <strong>❌ Low Match.</strong> This track has a low preference score. You might not enjoy this music based on your taste profile.
+                                </div>
+                            {% endif %}
+                            
+                            <p class="text-white-50 mb-0">
+                                <small>
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    This score is based on your listening patterns, completion rates, and engagement behavior.
+                                </small>
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Score Breakdown Chart -->
+                    <div class="chart-container">
+                        <h5 class="text-white mb-4">
+                            <i class="fas fa-chart-pie me-2"></i>Score Breakdown
+                        </h5>
+                        <canvas id="scoreChart" width="400" height="200"></canvas>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center mt-4">
+                        <button class="btn btn-glow me-3" onclick="getNewRecommendation()">
+                            <i class="fas fa-refresh me-2"></i>Try Another Track
+                        </button>
+                        <a href="{{ url_for('train_model_route') }}" class="btn btn-outline-light">
+                            <i class="fas fa-brain me-2"></i>Retrain Model
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- How It Works -->
+                <div class="glass-card p-4 mt-4">
+                    <h5 class="text-white mb-4">
+                        <i class="fas fa-cogs me-2"></i>How Our AI Works
+                    </h5>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-brain text-primary me-2"></i>Smart Analysis
+                            </h6>
+                            <p class="text-white-50 mb-0">Our AI analyzes your listening patterns, completion rates, and engagement behavior to understand your musical DNA.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-white mb-2">
+                                <i class="fas fa-chart-line text-success me-2"></i>Real-time Scoring
+                            </h6>
+                            <p class="text-white-50 mb-0">Get instant preference scores based on sophisticated algorithms that consider time patterns and rewind behavior.</p>
                         </div>
                     </div>
                 </div>
@@ -150,6 +410,73 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Form submission with loading state
+        document.getElementById('recommendationForm').addEventListener('submit', function(e) {
+            const loadingState = document.getElementById('loadingState');
+            const form = this;
+            
+            loadingState.style.display = 'block';
+            form.style.display = 'none';
+            
+            // Simulate processing time
+            setTimeout(() => {
+                // Form will submit naturally
+            }, 1000);
+        });
+
+        // Chart for score breakdown
+        {% if prediction is defined %}
+        const ctx = document.getElementById('scoreChart').getContext('2d');
+        const score = {{ prediction }};
+        
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Match Score', 'Remaining'],
+                datasets: [{
+                    data: [score, 100 - score],
+                    backgroundColor: [
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(255, 255, 255, 0.1)'
+                    ],
+                    borderColor: [
+                        'rgba(79, 172, 254, 1)',
+                        'rgba(255, 255, 255, 0.2)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+
+        function getNewRecommendation() {
+            document.getElementById('recommendationForm').style.display = 'block';
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('track_id').value = '';
+            document.getElementById('artist').value = '';
+            document.getElementById('track_id').focus();
+        }
+
+        // Add pulse animation to score circle
+        {% if prediction is defined %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const scoreCircle = document.querySelector('.score-circle');
+            scoreCircle.classList.add('pulse');
+        });
+        {% endif %}
+    </script>
 </body>
 </html>

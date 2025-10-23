@@ -299,3 +299,4 @@ if __name__ == "__main__":
     print("🎨 Data Visualization Utilities")
     print("This module provides comprehensive visualization tools for music data.")
     print("Use DataVisualizer class to explore your dataset.")
+

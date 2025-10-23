@@ -1,11 +1,13 @@
 """
-Simple web interface for the music recommendation engine.
+Stunning web interface for the music recommendation engine.
 
-This module provides a Flask-based web application for:
-- Uploading listening data
-- Training models
-- Getting recommendations
-- Viewing model performance
+This module provides a beautiful Flask-based web application with:
+- Glass morphism design and smooth animations
+- Drag-and-drop file upload with progress tracking
+- Real-time model training with visual feedback
+- Interactive recommendation scoring with charts
+- Comprehensive performance dashboards
+- Mobile-responsive design
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
@@ -16,6 +18,7 @@ import os
 import json
 from datetime import datetime
 import sys
+import logging
 
 # Add src to path
 sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
@@ -23,9 +26,23 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
 from feature_engineering import apply_features, calculate_preference_score
 from model_training import train_model, evaluate_model
 from evaluation import ModelEvaluator
+from config import get_config
+
+# Initialize configuration
+config = get_config()
 
 app = Flask(__name__)
-app.secret_key = 'your-secret-key-here'  # Change this in production
+app.secret_key = config.web.secret_key
+
+# Configure logging
+logging.basicConfig(
+    level=getattr(logging, config.logging.level.upper()),
+    format=config.logging.format,
+    handlers=[
+        logging.FileHandler(config.logging.file_path) if config.logging.file_path else logging.StreamHandler(),
+        logging.StreamHandler()
+    ]
+)
 
 # Global variables for model and data
 current_model = None
@@ -264,3 +281,4 @@ if __name__ == '__main__':
     os.makedirs('static', exist_ok=True)
     
     app.run(debug=True, host='0.0.0.0', port=5000)
+

@@ -3,82 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Data - Music Recommendation Engine</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>📤 Upload Your Music Data - MelodyAI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .upload-area {
+            border: 3px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 3rem;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .upload-area:hover {
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.02);
+        }
+
+        .upload-area.dragover {
+            border-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+            transform: scale(1.05);
+        }
+
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-glow {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .file-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            color: white;
+            display: none;
+        }
+
+        .progress-container {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .progress-glow {
+            height: 10px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        .progress-glow .progress-bar {
+            background: var(--success-gradient);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(79, 172, 254, 0.8); }
+        }
+
+        .success-animation {
+            display: none;
+            text-align: center;
+            color: white;
+        }
+
+        .success-checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #4CAF50;
+            stroke-miterlimit: 10;
+            margin: 0 auto;
+            box-shadow: inset 0px 0px 0px #4CAF50;
+            animation: fill 0.4s ease-in-out 0.4s forwards, scale 0.3s ease-in-out 0.9s both;
+        }
+
+        .success-checkmark circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #4CAF50;
+            fill: none;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+        }
+
+        .success-checkmark path {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+        }
+
+        @keyframes stroke {
+            100% { stroke-dashoffset: 0; }
+        }
+
+        @keyframes scale {
+            0%, 100% { transform: none; }
+            50% { transform: scale3d(1.1, 1.1, 1); }
+        }
+
+        @keyframes fill {
+            100% { box-shadow: inset 0px 0px 0px 30px #4CAF50; }
+        }
+
+        .requirement-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .sample-data {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #00f2fe;
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-music"></i> Music Recommendation Engine
+                <i class="fas fa-music me-2"></i>MelodyAI
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('upload_data') }}">Upload Data</a>
-                <a class="nav-link" href="{{ url_for('train_model_route') }}">Train Model</a>
-                <a class="nav-link" href="{{ url_for('get_recommendations') }}">Get Recommendations</a>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+                <a class="nav-link" href="{{ url_for('train_model_route') }}">
+                    <i class="fas fa-brain me-1"></i>Train Model
+                </a>
+                <a class="nav-link" href="{{ url_for('get_recommendations') }}">
+                    <i class="fas fa-magic me-1"></i>Get Recommendations
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 pt-5">
         <div class="row justify-content-center">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h3><i class="fas fa-upload"></i> Upload Listening Data</h3>
+            <div class="col-lg-8">
+                <div class="glass-card p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-white mb-3">
+                            <i class="fas fa-cloud-upload-alt me-2"></i>Upload Your Music Data
+                        </h2>
+                        <p class="text-white-50">Share your listening history and let our AI discover your musical taste</p>
                     </div>
-                    <div class="card-body">
-                        {% with messages = get_flashed_messages() %}
-                            {% if messages %}
-                                {% for message in messages %}
-                                    <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                        {{ message }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                    </div>
-                                {% endfor %}
-                            {% endif %}
-                        {% endwith %}
 
-                        <form method="POST" enctype="multipart/form-data">
-                            <div class="mb-4">
-                                <label for="file" class="form-label">Select CSV File</label>
-                                <input type="file" class="form-control" id="file" name="file" accept=".csv" required>
-                                <div class="form-text">Please upload a CSV file containing your listening history.</div>
+                    {% with messages = get_flashed_messages() %}
+                        {% if messages %}
+                            {% for message in messages %}
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                    <i class="fas fa-check-circle me-2"></i>{{ message }}
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Upload Area -->
+                    <div class="upload-area" id="uploadArea">
+                        <div class="upload-icon">
+                            <i class="fas fa-cloud-upload-alt"></i>
+                        </div>
+                        <h4 class="mb-3">Drag & Drop Your CSV File Here</h4>
+                        <p class="mb-4">or click to browse your files</p>
+                        <input type="file" id="fileInput" accept=".csv" style="display: none;">
+                        <button class="btn btn-glow" onclick="document.getElementById('fileInput').click()">
+                            <i class="fas fa-folder-open me-2"></i>Choose File
+                        </button>
+                    </div>
+
+                    <!-- File Info -->
+                    <div class="file-info" id="fileInfo">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-file-csv fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-1" id="fileName">-</h5>
+                                <p class="mb-0 text-white-50" id="fileSize">-</p>
                             </div>
+                        </div>
+                    </div>
 
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-primary btn-lg">
-                                    <i class="fas fa-upload"></i> Upload Data
-                                </button>
-                            </div>
-                        </form>
+                    <!-- Progress Bar -->
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-glow">
+                            <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center text-white mt-2 mb-0" id="progressText">Uploading...</p>
+                    </div>
 
-                        <hr class="my-4">
+                    <!-- Success Animation -->
+                    <div class="success-animation" id="successAnimation">
+                        <svg class="success-checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
+                            <circle class="success-checkmark-circle" cx="26" cy="26" r="25" fill="none"/>
+                            <path class="success-checkmark-check" fill="none" d="m14.1 27.2l7.1 7.2 16.7-16.8"/>
+                        </svg>
+                        <h4 class="text-white mt-3">Upload Successful!</h4>
+                        <p class="text-white-50">Your data is being processed...</p>
+                    </div>
 
-                        <h5>Required CSV Columns:</h5>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><code>ts</code> - Timestamp of listening event</li>
-                            <li class="list-group-item"><code>ms_played</code> - Milliseconds played</li>
-                            <li class="list-group-item"><code>duration_ms</code> - Total track duration</li>
-                            <li class="list-group-item"><code>id</code> - Unique track identifier</li>
-                        </ul>
+                    <!-- Form -->
+                    <form method="POST" enctype="multipart/form-data" id="uploadForm" style="display: none;">
+                        <input type="file" name="file" id="hiddenFileInput" accept=".csv">
+                        <button type="submit" class="btn btn-glow w-100 mt-3">
+                            <i class="fas fa-rocket me-2"></i>Process My Data
+                        </button>
+                    </form>
+                </div>
 
-                        <h5 class="mt-4">Optional Columns:</h5>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item"><code>track</code> - Track name</li>
-                            <li class="list-group-item"><code>artist</code> - Artist name</li>
-                            <li class="list-group-item"><code>popularity</code> - Track popularity score</li>
-                            <li class="list-group-item"><code>danceability</code>, <code>energy</code>, <code>valence</code> - Audio features</li>
-                            <li class="list-group-item"><code>reason_start</code>, <code>reason_end</code> - Playback reasons</li>
-                            <li class="list-group-item"><code>skipped</code> - Whether track was skipped</li>
-                        </ul>
+                <!-- Requirements -->
+                <div class="glass-card p-4 mt-4">
+                    <h5 class="text-white mb-4">
+                        <i class="fas fa-info-circle me-2"></i>Data Requirements
+                    </h5>
+                    
+                    <div class="requirement-card">
+                        <h6 class="text-white mb-2">
+                            <i class="fas fa-check-circle text-success me-2"></i>Required Columns
+                        </h6>
+                        <p class="mb-0 text-white-50">Your CSV must include these columns:</p>
+                        <div class="mt-2">
+                            <span class="badge bg-primary me-2">ts</span>
+                            <span class="badge bg-primary me-2">ms_played</span>
+                            <span class="badge bg-primary me-2">duration_ms</span>
+                            <span class="badge bg-primary">id</span>
+                        </div>
+                    </div>
 
-                        <div class="alert alert-info mt-4">
-                            <h6><i class="fas fa-info-circle"></i> Sample Data Format:</h6>
-                            <pre><code>ts,ms_played,duration_ms,id,track,artist,popularity
-2024-01-01 10:30:00,180000,180000,track_001,Song Title,Artist Name,75</code></pre>
+                    <div class="requirement-card">
+                        <h6 class="text-white mb-2">
+                            <i class="fas fa-star text-warning me-2"></i>Optional Columns
+                        </h6>
+                        <p class="mb-0 text-white-50">These columns will improve recommendations:</p>
+                        <div class="mt-2">
+                            <span class="badge bg-secondary me-1">track</span>
+                            <span class="badge bg-secondary me-1">artist</span>
+                            <span class="badge bg-secondary me-1">popularity</span>
+                            <span class="badge bg-secondary me-1">danceability</span>
+                            <span class="badge bg-secondary me-1">energy</span>
+                            <span class="badge bg-secondary me-1">valence</span>
+                        </div>
+                    </div>
+
+                    <div class="requirement-card">
+                        <h6 class="text-white mb-2">
+                            <i class="fas fa-code text-info me-2"></i>Sample Format
+                        </h6>
+                        <div class="sample-data">
+ts,ms_played,duration_ms,id,track,artist,popularity<br>
+2024-01-01 10:30:00,180000,180000,track_001,Sample Song,Artist Name,75<br>
+2024-01-01 11:15:00,120000,200000,track_002,Another Song,Another Artist,60
                         </div>
                     </div>
                 </div>
@@ -86,6 +350,115 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const hiddenFileInput = document.getElementById('hiddenFileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const successAnimation = document.getElementById('successAnimation');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // Drag and drop functionality
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                alert('Please upload a CSV file');
+                return;
+            }
+
+            // Show file info
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            fileInfo.style.display = 'block';
+
+            // Set file for form
+            hiddenFileInput.files = fileInput.files;
+            uploadForm.style.display = 'block';
+
+            // Hide upload area
+            uploadArea.style.display = 'none';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Form submission with progress
+        uploadForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            // Show progress
+            progressContainer.style.display = 'block';
+            uploadForm.style.display = 'none';
+
+            // Simulate progress
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = `Processing... ${Math.round(progress)}%`;
+                
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        progressContainer.style.display = 'none';
+                        successAnimation.style.display = 'block';
+                        
+                        setTimeout(() => {
+                            // Submit the actual form
+                            const formData = new FormData();
+                            formData.append('file', hiddenFileInput.files[0]);
+                            
+                            fetch(window.location.href, {
+                                method: 'POST',
+                                body: formData
+                            }).then(response => {
+                                if (response.ok) {
+                                    window.location.href = response.url;
+                                }
+                            });
+                        }, 2000);
+                    }, 1000);
+                }
+            }, 200);
+        });
+    </script>
 </body>
 </html>

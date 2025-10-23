@@ -3,35 +3,253 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Model Performance - Music Recommendation Engine</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <title>📊 Model Performance - MelodyAI</title>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+        }
+
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            background: var(--secondary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--success-gradient);
+        }
+
+        .metric-number {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: var(--success-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-description {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .progress-glow {
+            height: 12px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .progress-glow .progress-bar {
+            background: var(--success-gradient);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+            animation: progressGlow 2s ease-in-out infinite;
+        }
+
+        @keyframes progressGlow {
+            0%, 100% { box-shadow: 0 0 20px rgba(79, 172, 254, 0.5); }
+            50% { box-shadow: 0 0 30px rgba(79, 172, 254, 0.8); }
+        }
+
+        .chart-container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .btn-glow {
+            background: var(--secondary-gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2rem;
+            font-weight: 600;
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .btn-glow:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            color: white;
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .status-excellent {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+
+        .status-good {
+            background: rgba(33, 150, 243, 0.2);
+            color: #2196F3;
+            border: 1px solid rgba(33, 150, 243, 0.3);
+        }
+
+        .status-fair {
+            background: rgba(255, 193, 7, 0.2);
+            color: #FFC107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .status-poor {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .interpretation-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container">
             <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-music"></i> Music Recommendation Engine
+                <i class="fas fa-music me-2"></i>MelodyAI
             </a>
             <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('upload_data') }}">Upload Data</a>
-                <a class="nav-link" href="{{ url_for('train_model_route') }}">Train Model</a>
-                <a class="nav-link" href="{{ url_for('get_recommendations') }}">Get Recommendations</a>
+                <a class="nav-link" href="{{ url_for('index') }}">
+                    <i class="fas fa-home me-1"></i>Home
+                </a>
+                <a class="nav-link" href="{{ url_for('upload_data') }}">
+                    <i class="fas fa-upload me-1"></i>Upload Data
+                </a>
+                <a class="nav-link" href="{{ url_for('train_model_route') }}">
+                    <i class="fas fa-brain me-1"></i>Train Model
+                </a>
+                <a class="nav-link" href="{{ url_for('get_recommendations') }}">
+                    <i class="fas fa-magic me-1"></i>Get Recommendations
+                </a>
             </div>
         </div>
     </nav>
 
-    <div class="container mt-5">
+    <div class="container mt-5 pt-5">
         <div class="row">
             <div class="col-12">
-                <h2><i class="fas fa-chart-line"></i> Model Performance</h2>
-                
+                <div class="text-center mb-5">
+                    <h1 class="text-white mb-3 floating">
+                        <i class="fas fa-chart-line me-2"></i>Model Performance Dashboard
+                    </h1>
+                    <p class="text-white-50">Comprehensive analysis of your AI's recommendation accuracy</p>
+                </div>
+
                 {% with messages = get_flashed_messages() %}
                     {% if messages %}
                         {% for message in messages %}
-                            <div class="alert alert-info alert-dismissible fade show" role="alert">
-                                {{ message }}
+                            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                <i class="fas fa-check-circle me-2"></i>{{ message }}
                                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                             </div>
                         {% endfor %}
@@ -39,147 +257,310 @@
                 {% endwith %}
 
                 <!-- Performance Metrics -->
-                <div class="row mb-4">
-                    <div class="col-md-3">
-                        <div class="card bg-primary text-white">
-                            <div class="card-body text-center">
-                                <i class="fas fa-chart-line fa-2x mb-2"></i>
-                                <h3>{{ "%.3f"|format(metrics.r2) }}</h3>
-                                <p class="mb-0">R² Score</p>
-                                <small>Higher is better</small>
+                <div class="row g-4 mb-5">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card pulse">
+                            <div class="metric-number">{{ "%.3f"|format(metrics.r2) }}</div>
+                            <div class="metric-label">R² Score</div>
+                            <div class="metric-description">Model Accuracy</div>
+                            <div class="progress-glow">
+                                <div class="progress-bar" style="width: {{ (metrics.r2 * 100) }}%"></div>
                             </div>
+                            {% if metrics.r2 > 0.8 %}
+                                <span class="status-badge status-excellent">Excellent</span>
+                            {% elif metrics.r2 > 0.6 %}
+                                <span class="status-badge status-good">Good</span>
+                            {% elif metrics.r2 > 0.4 %}
+                                <span class="status-badge status-fair">Fair</span>
+                            {% else %}
+                                <span class="status-badge status-poor">Needs Improvement</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-success text-white">
-                            <div class="card-body text-center">
-                                <i class="fas fa-bullseye fa-2x mb-2"></i>
-                                <h3>{{ "%.2f"|format(metrics.mae) }}</h3>
-                                <p class="mb-0">Mean Absolute Error</p>
-                                <small>Lower is better</small>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ "%.2f"|format(metrics.mae) }}</div>
+                            <div class="metric-label">Mean Absolute Error</div>
+                            <div class="metric-description">Average Prediction Error</div>
+                            <div class="progress-glow">
+                                <div class="progress-bar" style="width: {{ (100 - metrics.mae * 2) }}%"></div>
                             </div>
+                            {% if metrics.mae < 5 %}
+                                <span class="status-badge status-excellent">Excellent</span>
+                            {% elif metrics.mae < 10 %}
+                                <span class="status-badge status-good">Good</span>
+                            {% elif metrics.mae < 15 %}
+                                <span class="status-badge status-fair">Fair</span>
+                            {% else %}
+                                <span class="status-badge status-poor">Needs Improvement</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-info text-white">
-                            <div class="card-body text-center">
-                                <i class="fas fa-square-root-alt fa-2x mb-2"></i>
-                                <h3>{{ "%.2f"|format(metrics.rmse) }}</h3>
-                                <p class="mb-0">Root Mean Square Error</p>
-                                <small>Lower is better</small>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ "%.2f"|format(metrics.rmse) }}</div>
+                            <div class="metric-label">Root Mean Square Error</div>
+                            <div class="metric-description">Prediction Variability</div>
+                            <div class="progress-glow">
+                                <div class="progress-bar" style="width: {{ (100 - metrics.rmse * 1.5) }}%"></div>
                             </div>
+                            {% if metrics.rmse < 8 %}
+                                <span class="status-badge status-excellent">Excellent</span>
+                            {% elif metrics.rmse < 15 %}
+                                <span class="status-badge status-good">Good</span>
+                            {% elif metrics.rmse < 25 %}
+                                <span class="status-badge status-fair">Fair</span>
+                            {% else %}
+                                <span class="status-badge status-poor">Needs Improvement</span>
+                            {% endif %}
                         </div>
                     </div>
-                    <div class="col-md-3">
-                        <div class="card bg-warning text-white">
-                            <div class="card-body text-center">
-                                <i class="fas fa-percentage fa-2x mb-2"></i>
-                                <h3>{{ "%.1f"|format(metrics.mape) }}%</h3>
-                                <p class="mb-0">Mean Absolute Percentage Error</p>
-                                <small>Lower is better</small>
+                    
+                    <div class="col-lg-3 col-md-6">
+                        <div class="metric-card">
+                            <div class="metric-number">{{ "%.1f"|format(metrics.mape) }}%</div>
+                            <div class="metric-label">Mean Absolute Percentage Error</div>
+                            <div class="metric-description">Relative Error</div>
+                            <div class="progress-glow">
+                                <div class="progress-bar" style="width: {{ (100 - metrics.mape) }}%"></div>
                             </div>
+                            {% if metrics.mape < 10 %}
+                                <span class="status-badge status-excellent">Excellent</span>
+                            {% elif metrics.mape < 20 %}
+                                <span class="status-badge status-good">Good</span>
+                            {% elif metrics.mape < 30 %}
+                                <span class="status-badge status-fair">Fair</span>
+                            {% else %}
+                                <span class="status-badge status-poor">Needs Improvement</span>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <!-- Cross-Validation Results -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-check-circle"></i> Cross-Validation Results</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>R² Score (5-fold CV):</h6>
-                                <div class="progress mb-2">
-                                    <div class="progress-bar" role="progressbar" 
-                                         style="width: {{ (metrics.cv_r2_mean * 100) | round }}%"
-                                         aria-valuenow="{{ metrics.cv_r2_mean }}" 
-                                         aria-valuemin="0" aria-valuemax="1">
-                                        {{ "%.3f"|format(metrics.cv_r2_mean) }}
-                                    </div>
+                <div class="glass-card p-5 mb-4">
+                    <h4 class="text-white mb-4">
+                        <i class="fas fa-check-circle me-2"></i>Cross-Validation Analysis
+                    </h4>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="interpretation-card">
+                                <h6 class="text-white mb-3">R² Score (5-fold CV)</h6>
+                                <div class="progress-glow mb-3">
+                                    <div class="progress-bar" style="width: {{ (metrics.cv_r2_mean * 100) }}%"></div>
                                 </div>
-                                <small class="text-muted">Mean: {{ "%.3f"|format(metrics.cv_r2_mean) }} ± {{ "%.3f"|format(metrics.cv_r2_std) }}</small>
+                                <p class="text-white-50 mb-2">
+                                    <strong>Mean:</strong> {{ "%.3f"|format(metrics.cv_r2_mean) }} ± {{ "%.3f"|format(metrics.cv_r2_std) }}
+                                </p>
+                                <p class="text-white-50 mb-0">
+                                    This shows how consistently your model performs across different data splits.
+                                </p>
                             </div>
-                            <div class="col-md-6">
-                                <h6>Model Stability:</h6>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="interpretation-card">
+                                <h6 class="text-white mb-3">Model Stability</h6>
                                 {% if metrics.cv_r2_std < 0.05 %}
-                                    <span class="badge bg-success">Very Stable</span>
+                                    <span class="status-badge status-excellent mb-3">Very Stable</span>
+                                    <p class="text-white-50 mb-0">
+                                        Your model performs consistently across different data splits. This is excellent!
+                                    </p>
                                 {% elif metrics.cv_r2_std < 0.1 %}
-                                    <span class="badge bg-warning">Stable</span>
+                                    <span class="status-badge status-good mb-3">Stable</span>
+                                    <p class="text-white-50 mb-0">
+                                        Your model shows good stability with minor variations across splits.
+                                    </p>
                                 {% else %}
-                                    <span class="badge bg-danger">Unstable</span>
+                                    <span class="status-badge status-poor mb-3">Unstable</span>
+                                    <p class="text-white-50 mb-0">
+                                        Your model shows significant variation. Consider more data or feature engineering.
+                                    </p>
                                 {% endif %}
-                                <p class="mt-2"><small class="text-muted">Standard deviation: {{ "%.3f"|format(metrics.cv_r2_std) }}</small></p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Performance Interpretation -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5><i class="fas fa-lightbulb"></i> Performance Interpretation</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <h6>R² Score Analysis:</h6>
-                                {% if metrics.r2 > 0.8 %}
-                                    <div class="alert alert-success">
-                                        <strong>Excellent!</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
-                                    </div>
-                                {% elif metrics.r2 > 0.6 %}
-                                    <div class="alert alert-info">
-                                        <strong>Good!</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
-                                    </div>
-                                {% elif metrics.r2 > 0.4 %}
-                                    <div class="alert alert-warning">
-                                        <strong>Fair.</strong> Your model explains {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance in preference scores.
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-danger">
-                                        <strong>Needs improvement.</strong> Your model explains only {{ "%.1f"|format(metrics.r2 * 100) }}% of the variance.
-                                    </div>
-                                {% endif %}
-                            </div>
-                            <div class="col-md-6">
-                                <h6>Error Analysis:</h6>
-                                <p><strong>Mean Absolute Error:</strong> {{ "%.2f"|format(metrics.mae) }} points</p>
-                                <p><strong>Root Mean Square Error:</strong> {{ "%.2f"|format(metrics.rmse) }} points</p>
-                                <p><strong>Average Error:</strong> {{ "%.1f"|format(metrics.mape) }}%</p>
-                                
-                                {% if metrics.mape < 10 %}
-                                    <div class="alert alert-success">
-                                        <strong>Low error!</strong> Predictions are very accurate.
-                                    </div>
-                                {% elif metrics.mape < 20 %}
-                                    <div class="alert alert-info">
-                                        <strong>Moderate error.</strong> Predictions are reasonably accurate.
-                                    </div>
-                                {% else %}
-                                    <div class="alert alert-warning">
-                                        <strong>High error.</strong> Consider improving your model or data quality.
-                                    </div>
-                                {% endif %}
-                            </div>
+                <!-- Performance Charts -->
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h5 class="text-white mb-4">
+                                <i class="fas fa-chart-pie me-2"></i>Error Distribution
+                            </h5>
+                            <canvas id="errorChart" width="400" height="300"></canvas>
                         </div>
                     </div>
+                    <div class="col-lg-6">
+                        <div class="chart-container">
+                            <h5 class="text-white mb-4">
+                                <i class="fas fa-chart-bar me-2"></i>Performance Metrics
+                            </h5>
+                            <canvas id="metricsChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Overall Assessment -->
+                <div class="glass-card p-5 mb-4">
+                    <h4 class="text-white mb-4">
+                        <i class="fas fa-lightbulb me-2"></i>Overall Assessment
+                    </h4>
+                    
+                    {% if metrics.r2 > 0.8 and metrics.mae < 5 %}
+                        <div class="alert alert-success">
+                            <h5 class="mb-3">
+                                <i class="fas fa-trophy me-2"></i>Outstanding Performance!
+                            </h5>
+                            <p class="mb-0">
+                                Your model is performing exceptionally well! With an R² score of {{ "%.1f"|format(metrics.r2 * 100) }}% 
+                                and a mean absolute error of only {{ "%.2f"|format(metrics.mae) }}, your AI is making highly accurate 
+                                music recommendations. Users will love the precision of your suggestions!
+                            </p>
+                        </div>
+                    {% elif metrics.r2 > 0.6 and metrics.mae < 10 %}
+                        <div class="alert alert-info">
+                            <h5 class="mb-3">
+                                <i class="fas fa-thumbs-up me-2"></i>Good Performance
+                            </h5>
+                            <p class="mb-0">
+                                Your model is performing well! With an R² score of {{ "%.1f"|format(metrics.r2 * 100) }}% 
+                                and a mean absolute error of {{ "%.2f"|format(metrics.mae) }}, your AI provides solid 
+                                recommendations. Consider adding more data or features to improve further.
+                            </p>
+                        </div>
+                    {% elif metrics.r2 > 0.4 %}
+                        <div class="alert alert-warning">
+                            <h5 class="mb-3">
+                                <i class="fas fa-exclamation-triangle me-2"></i>Fair Performance
+                            </h5>
+                            <p class="mb-0">
+                                Your model shows moderate performance with an R² score of {{ "%.1f"|format(metrics.r2 * 100) }}%. 
+                                Consider collecting more diverse data, improving feature engineering, or trying different 
+                                algorithms to enhance accuracy.
+                            </p>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-danger">
+                            <h5 class="mb-3">
+                                <i class="fas fa-exclamation-circle me-2"></i>Needs Improvement
+                            </h5>
+                            <p class="mb-0">
+                                Your model needs significant improvement. With an R² score of {{ "%.1f"|format(metrics.r2 * 100) }}%, 
+                                consider collecting more data, improving data quality, or trying different approaches 
+                                to feature engineering and model selection.
+                            </p>
+                        </div>
+                    {% endif %}
                 </div>
 
                 <!-- Action Buttons -->
                 <div class="text-center">
-                    <a href="{{ url_for('get_recommendations') }}" class="btn btn-success btn-lg me-3">
-                        <i class="fas fa-magic"></i> Get Recommendations
+                    <a href="{{ url_for('get_recommendations') }}" class="btn btn-glow btn-lg me-3">
+                        <i class="fas fa-magic me-2"></i>Get Recommendations
                     </a>
-                    <a href="{{ url_for('train_model_route') }}" class="btn btn-secondary btn-lg">
-                        <i class="fas fa-redo"></i> Retrain Model
+                    <a href="{{ url_for('train_model_route') }}" class="btn btn-outline-light btn-lg">
+                        <i class="fas fa-redo me-2"></i>Retrain Model
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Error Distribution Chart
+        const errorCtx = document.getElementById('errorChart').getContext('2d');
+        new Chart(errorCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Accurate Predictions', 'Prediction Error'],
+                datasets: [{
+                    data: [{{ metrics.r2 * 100 }}, {{ (1 - metrics.r2) * 100 }}],
+                    backgroundColor: [
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(255, 255, 255, 0.1)'
+                    ],
+                    borderColor: [
+                        'rgba(79, 172, 254, 1)',
+                        'rgba(255, 255, 255, 0.2)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Performance Metrics Chart
+        const metricsCtx = document.getElementById('metricsChart').getContext('2d');
+        new Chart(metricsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['R² Score', 'MAE', 'RMSE', 'MAPE'],
+                datasets: [{
+                    label: 'Performance',
+                    data: [
+                        {{ metrics.r2 * 100 }},
+                        {{ metrics.mae }},
+                        {{ metrics.rmse }},
+                        {{ metrics.mape }}
+                    ],
+                    backgroundColor: [
+                        'rgba(79, 172, 254, 0.8)',
+                        'rgba(255, 193, 7, 0.8)',
+                        'rgba(244, 67, 54, 0.8)',
+                        'rgba(156, 39, 176, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(79, 172, 254, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(244, 67, 54, 1)',
+                        'rgba(156, 39, 176, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: 'white'
+                        },
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: 'white'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

@@ -22,3 +22,4 @@ import joblib
 model = joblib.load('models/recommendation_model_20241023_130000.pkl')
 predictions = model.predict(X_test)
 ```
+
