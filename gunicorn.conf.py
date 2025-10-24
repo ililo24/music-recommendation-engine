@@ -13,15 +13,16 @@ import os
 PORT = os.getenv("PORT", "5000")
 bind = f"0.0.0.0:{PORT}"
 
-# Workers: allow override via WEB_CONCURRENCY, default to 2
-workers = int(os.getenv("WEB_CONCURRENCY", "2"))
+# Workers: allow override via WEB_CONCURRENCY, default to 1 (lower memory)
+workers = int(os.getenv("WEB_CONCURRENCY", "1"))
 worker_class = "sync"
 worker_connections = 1000
 timeout = 30
 keepalive = 2
 max_requests = 1000
 max_requests_jitter = 50
-preload_app = True
+# Preload can spike memory; disable by default for small instances
+preload_app = os.getenv("GUNICORN_PRELOAD", "false").lower() == "true"
 
 # Logging to stdout/stderr (Railway ingests these)
 accesslog = "-"
