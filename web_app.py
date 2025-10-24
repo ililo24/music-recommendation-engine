@@ -56,6 +56,12 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/health', methods=['GET'])
+def health():
+    """Simple healthcheck endpoint"""
+    return jsonify({"status": "ok"}), 200
+
+
 @app.route('/upload', methods=['GET', 'POST'])
 def upload_data():
     """Upload and process data"""
@@ -280,5 +286,9 @@ if __name__ == '__main__':
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static', exist_ok=True)
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # Respect environment PORT if provided (e.g., Railway local dev)
+    port = int(os.getenv('PORT', config.web.port))
+    host = os.getenv('WEB_HOST', config.web.host)
+    debug = os.getenv('WEB_DEBUG', str(config.web.debug)).lower() == 'true'
+    app.run(debug=debug, host=host, port=port)
 
