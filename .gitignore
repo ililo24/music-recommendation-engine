@@ -1,3 +1,49 @@
-.ipynb_checkpoints/n__pycache__/n*.pycn*.logn.DS_Storen*.csvn*.parquetn*.xlsxn.envn.venv/n.envrcn*.ipynb~n.env
-.aider*
+# Environment variables / secrets
 .env
+.envrc
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Aider
+.aider*
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb~
+
+# Data files
+*.csv
+*.parquet
+*.xlsx
+
+# Trained models
+*.pkl
+*.joblib
+
+# Logs
+logs/
+*.log
+
+# Test / coverage artifacts
+htmlcov/
+.coverage
+.coverage.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.swp
