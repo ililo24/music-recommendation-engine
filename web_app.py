@@ -8,41 +8,49 @@ This module provides a beautiful Flask-based web application with:
 - Interactive recommendation scoring with charts
 - Comprehensive performance dashboards
 - Mobile-responsive design
+
+Legacy code: frozen after the Phase 0 refactor; replaced by the
+src/musicrec/ package (FastAPI) in later phases.
 """
 
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 import pandas as pd
 import numpy as np
-import joblib
 import os
-import json
 from datetime import datetime
 import sys
 import logging
 
 # Add src to path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from feature_engineering import apply_features, calculate_preference_score
-from model_training import train_model, evaluate_model
-from evaluation import ModelEvaluator
-from config import get_config
+from musicrec.ml.features import apply_features, calculate_preference_score
+from musicrec.ml.training import train_model, evaluate_model
+from musicrec.ml.evaluation import ModelEvaluator
+from musicrec.core.config import get_settings
 
 # Initialize configuration
-config = get_config()
+settings = get_settings()
 
 app = Flask(__name__)
-app.secret_key = config.web.secret_key
+app.secret_key = settings.secret_key
 
 # Configure logging
+if settings.log_file_path:
+    os.makedirs(os.path.dirname(settings.log_file_path) or '.', exist_ok=True)
+
 logging.basicConfig(
-    level=getattr(logging, config.logging.level.upper()),
-    format=config.logging.format,
+    level=getattr(logging, settings.log_level.upper()),
+    format=settings.log_format,
     handlers=[
-        logging.FileHandler(config.logging.file_path) if config.logging.file_path else logging.StreamHandler(),
+        logging.FileHandler(settings.log_file_path) if settings.log_file_path else logging.StreamHandler(),
         logging.StreamHandler()
     ]
 )
+
+# Silence noisy third-party loggers (preserved from the legacy config)
+logging.getLogger('matplotlib').setLevel(logging.WARNING)
+logging.getLogger('seaborn').setLevel(logging.WARNING)
 
 # Global variables for model and data
 current_model = None
@@ -56,7 +64,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/')
-def home(:
+def home():
     return "Hello from Render - your app is live!"
 
 if __name__ == "__main__":
@@ -71,42 +79,42 @@ def upload_data():
         if 'file' not in request.files:
             flash('No file selected')
             return redirect(request.url)
-        
+
         file = request.files['file']
         if file.filename == '':
             flash('No file selected')
             return redirect(request.url)
-        
+
         if file and file.filename.endswith('.csv'):
             try:
                 # Read CSV
                 df = pd.read_csv(file)
-                
+
                 # Basic validation
                 required_cols = ['ts', 'ms_played', 'duration_ms', 'id']
                 missing_cols = [col for col in required_cols if col not in df.columns]
-                
+
                 if missing_cols:
                     flash(f'Missing required columns: {", ".join(missing_cols)}')
                     return redirect(request.url)
-                
+
                 # Convert timestamp
                 df['ts'] = pd.to_datetime(df['ts'])
-                
+
                 # Store globally
                 global current_data
                 current_data = df
-                
+
                 flash(f'Successfully uploaded {len(df)} records')
                 return redirect(url_for('data_overview'))
-                
+
             except Exception as e:
                 flash(f'Error processing file: {str(e)}')
                 return redirect(request.url)
         else:
             flash('Please upload a CSV file')
             return redirect(request.url)
-    
+
     return render_template('upload.html')
 
 
@@ -116,7 +124,7 @@ def data_overview():
     if current_data is None:
         flash('No data uploaded. Please upload data first.')
         return redirect(url_for('upload_data'))
-    
+
     # Basic statistics
     stats = {
         'total_records': len(current_data),
@@ -124,10 +132,10 @@ def data_overview():
         'unique_tracks': current_data['id'].nunique(),
         'unique_artists': current_data['artist'].nunique() if 'artist' in current_data.columns else 'N/A'
     }
-    
+
     # Sample data
     sample_data = current_data.head(10).to_dict('records')
-    
+
     return render_template('data_overview.html', stats=stats, sample_data=sample_data)
 
 
@@ -138,42 +146,42 @@ def train_model_route():
         if current_data is None:
             flash('No data available. Please upload data first.')
             return redirect(url_for('upload_data'))
-        
+
         try:
             # Get parameters
             test_split = float(request.form.get('test_split', 0.2))
             model_name = request.form.get('model_name', f'model_{datetime.now().strftime("%Y%m%d_%H%M%S")}')
-            
+
             # Split data
             split_point = int(len(current_data) * (1 - test_split))
             train_df = current_data.iloc[:split_point].copy()
             test_df = current_data.iloc[split_point:].copy()
-            
+
             # Apply feature engineering
             train_processed, test_processed = apply_features(train_df, test_df)
             train_processed = calculate_preference_score(train_processed)
-            
+
             # Add preference scores to test data (simulated)
             test_processed['preference_score'] = np.random.uniform(0, 100, len(test_processed))
-            
+
             # Train model
             global current_model, model_metrics
             current_model = train_model(train_processed)
-            
+
             # Evaluate model
             evaluator = ModelEvaluator(current_model, model_name)
             model_metrics, _ = evaluator.evaluate_performance(
                 test_processed.drop(columns=['preference_score']),
                 test_processed['preference_score']
             )
-            
+
             flash(f'Model trained successfully! R² = {model_metrics["r2"]:.3f}')
             return redirect(url_for('model_performance'))
-            
+
         except Exception as e:
             flash(f'Error training model: {str(e)}')
             return redirect(request.url)
-    
+
     return render_template('train.html')
 
 
@@ -183,7 +191,7 @@ def model_performance():
     if current_model is None or model_metrics is None:
         flash('No trained model available. Please train a model first.')
         return redirect(url_for('train_model_route'))
-    
+
     return render_template('performance.html', metrics=model_metrics)
 
 
@@ -193,17 +201,17 @@ def get_recommendations():
     if current_model is None:
         flash('No trained model available. Please train a model first.')
         return redirect(url_for('train_model_route'))
-    
+
     if request.method == 'POST':
         try:
             # Get user input
             track_id = request.form.get('track_id')
             artist = request.form.get('artist', '')
-            
+
             if not track_id:
                 flash('Please provide a track ID')
                 return redirect(request.url)
-            
+
             # Create sample data for prediction
             sample_data = {
                 'ts': [datetime.now()],
@@ -229,26 +237,26 @@ def get_recommendations():
                 'reason_end': ['endplay'],
                 'skipped': [False]
             }
-            
+
             df = pd.DataFrame(sample_data)
-            
+
             # Apply feature engineering
             train_dummy = df.head(1).copy()
             processed_df, _ = apply_features(train_dummy, df)
-            
+
             # Make prediction
             X = processed_df.drop(columns=['preference_score'], errors='ignore')
             prediction = current_model.predict(X)[0]
-            
-            return render_template('recommendations.html', 
-                                prediction=prediction, 
-                                track_id=track_id, 
+
+            return render_template('recommendations.html',
+                                prediction=prediction,
+                                track_id=track_id,
                                 artist=artist)
-            
+
         except Exception as e:
             flash(f'Error getting recommendations: {str(e)}')
             return redirect(request.url)
-    
+
     return render_template('recommendations.html')
 
 
@@ -257,28 +265,28 @@ def api_predict():
     """API endpoint for predictions"""
     if current_model is None:
         return jsonify({'error': 'No trained model available'}), 400
-    
+
     try:
         data = request.get_json()
-        
+
         # Create dataframe from input
         df = pd.DataFrame([data])
-        
+
         # Apply feature engineering
         train_dummy = df.head(1).copy()
         processed_df, _ = apply_features(train_dummy, df)
-        
+
         # Make prediction
         X = processed_df.drop(columns=['preference_score'], errors='ignore')
         prediction = current_model.predict(X)[0]
-        
+
         return jsonify({
             'prediction': float(prediction),
             'track_id': data.get('id'),
             'artist': data.get('artist', ''),
             'track': data.get('track', '')
         })
-        
+
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
@@ -287,6 +295,5 @@ if __name__ == '__main__':
     # Create templates directory if it doesn't exist
     os.makedirs('templates', exist_ok=True)
     os.makedirs('static', exist_ok=True)
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
 
+    app.run(debug=True, host='0.0.0.0', port=5000)

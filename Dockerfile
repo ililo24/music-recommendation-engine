@@ -23,7 +23,7 @@ COPY . .
 RUN mkdir -p logs data/raw data/processed models
 
 # Set environment variables
-ENV FLASK_APP=web_app.py
+ENV FLASK_APP=legacy/web_app.py
 ENV FLASK_ENV=production
 ENV PYTHONPATH=/app/src
 
@@ -35,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/ || exit 1
 
 # Run the application
-CMD ["gunicorn", "--config", "gunicorn.conf.py", "web_app:app"]
+CMD ["gunicorn", "--config", "gunicorn.conf.py", "legacy.web_app:app"]

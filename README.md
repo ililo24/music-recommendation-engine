@@ -1,4 +1,3 @@
-
 # 🎵 Music Recommendation Engine
 
 A sophisticated machine learning pipeline that predicts user music preferences based on listening behavior, completion rates, and audio features. Now with a complete web interface, comprehensive testing, and production-ready features!
@@ -18,9 +17,13 @@ A sophisticated machine learning pipeline that predicts user music preferences b
 
 ## 📊 Model Performance
 
-- **Cross-validation R²**: 0.85+
-- **Mean Absolute Error**: <5.0
-- **Feature Importance**: Completion rate, streams, time patterns
+No performance numbers are claimed here: per CONVENTION.md rule 10, metrics
+must come from a reproducible script. Run the pipeline on your own data to
+measure R²/MAE:
+
+```bash
+python legacy/train.py --data data/raw/listening_history.csv
+```
 
 ## 🛠️ Tech Stack
 
@@ -63,23 +66,24 @@ A sophisticated machine learning pipeline that predicts user music preferences b
 │   └── processed/          # Feature-engineered datasets
 ├── models/                  # Trained models and metadata
 ├── notebooks/               # Jupyter notebooks for analysis
-├── src/                    # Source code
-│   ├── feature_engineering.py  # Feature creation functions
-│   ├── model_training.py      # Model training pipeline
-│   ├── evaluation.py          # Model evaluation tools
-│   ├── visualization.py       # Data visualization utilities
-│   └── config.py             # Configuration management
+├── src/
+│   └── musicrec/           # Application package
+│       ├── core/           # config.py (pydantic-settings)
+│       ├── ml/             # Pure ML: features.py, training.py, evaluation.py
+│       └── services/       # visualization.py
 ├── tests/                  # Comprehensive test suite
 │   ├── test_feature_engineering.py
 │   ├── test_model_training.py
 │   └── test_integration.py
-├── templates/              # Web interface templates
-├── static/                 # Web assets (CSS, JS)
+├── legacy/                 # Frozen pre-SaaS code (replaced by src/musicrec)
+│   ├── web_app.py          # Flask web application
+│   ├── templates/          # Templates for the legacy web app
+│   ├── train.py            # CLI training script
+│   ├── config.py           # Old JSON-file config
+│   └── model_io.py         # Model load helper removed from ml/
 ├── logs/                   # Application logs
-├── train.py               # CLI training script
-├── web_app.py             # Flask web application
-├── run_tests.py           # Test runner
-└── setup.py               # Project setup script
+├── pyproject.toml          # Packaging + tooling config
+└── run_tests.py            # Test runner
 ```
 
 
@@ -92,11 +96,11 @@ A sophisticated machine learning pipeline that predicts user music preferences b
 git clone https://github.com/ililo24/music-recommendation-engine.git
 cd music-recommendation-engine
 
-# Run automated setup
-python setup.py
+# Install the package and dev tools
+pip install -e ".[dev]"
 
 # Start the web interface
-python web_app.py
+python legacy/web_app.py
 ```
 
 Visit `http://localhost:5000` to use the web interface!
@@ -104,7 +108,7 @@ Visit `http://localhost:5000` to use the web interface!
 ### Manual Setup
 
 #### Prerequisites
-- Python 3.8+
+- Python 3.11+
 - pip
 
 #### Installation
@@ -118,7 +122,7 @@ cd music-recommendation-engine
 pip install -r requirements.txt
 
 # Create directories
-mkdir -p data/{raw,processed} models notebooks logs
+mkdir -p data/{raw,processed} models logs
 
 # Run tests
 python run_tests.py
@@ -128,7 +132,7 @@ python run_tests.py
 
 #### 1. Web Interface (Easiest)
 ```bash
-python web_app.py
+python legacy/web_app.py
 ```
 - Upload your CSV data
 - Train models with a few clicks
@@ -138,21 +142,21 @@ python web_app.py
 #### 2. Command Line Interface
 ```bash
 # Train a model
-python train.py --data data/raw/listening_history.csv
+python legacy/train.py --data data/raw/listening_history.csv
 
 # Train with custom parameters
-python train.py --data data/raw/listening_history.csv --test-split 0.2 --model-name my_model
+python legacy/train.py --data data/raw/listening_history.csv --test-split 0.2 --model-name my_model
 
 # Make predictions
-python train.py --predict --model models/recommendation_model_20241023.pkl --data data/raw/new_data.csv
+python legacy/train.py --predict --model models/recommendation_model_20241023.pkl --data data/raw/new_data.csv
 ```
 
 #### 3. Python API
 ```python
-from src.feature_engineering import apply_features, calculate_preference_score
-from src.model_training import train_model, evaluate_model
-from src.evaluation import ModelEvaluator
-from src.visualization import DataVisualizer
+from musicrec.ml.features import apply_features, calculate_preference_score
+from musicrec.ml.training import train_model, evaluate_model
+from musicrec.ml.evaluation import ModelEvaluator
+from musicrec.services.visualization import DataVisualizer
 
 # Load your data
 df = pd.read_csv('data/raw/your_data.csv')
@@ -177,7 +181,7 @@ visualizer.plot_listening_patterns()
 
 ## 📊 Results
 
-The model achieves high accuracy in predicting user preferences by leveraging:
+The model predicts user preferences by leveraging:
 - **Completion rates** as primary engagement signals
 - **Rewind behavior** for high-engagement detection
 - **Temporal patterns** for context-aware recommendations
@@ -203,7 +207,7 @@ python run_tests.py --integration
 Explore your data with built-in visualization tools:
 
 ```python
-from src.visualization import DataVisualizer
+from musicrec.services.visualization import DataVisualizer
 
 # Create visualizer
 visualizer = DataVisualizer(df)
@@ -221,16 +225,15 @@ visualizer.generate_data_report('data_report.json')
 
 ## ⚙️ Configuration
 
-Customize the system with environment variables or config files:
+All settings come from environment variables (or a local `.env` file) via
+`src/musicrec/core/config.py` (pydantic-settings):
 
 ```bash
 # Environment variables
 export MODEL_N_ESTIMATORS=300
 export TEST_SPLIT=0.25
 export LOG_LEVEL=DEBUG
-
-# Or edit config.json
-python -c "from src.config import create_sample_config; create_sample_config()"
+export SECRET_KEY=your-secret-key
 ```
 
 ## 🌐 Web Interface Features
@@ -250,11 +253,11 @@ Open to contributions! This project aims to create better music recommendation a
 # Clone and setup for development
 git clone https://github.com/ililo24/music-recommendation-engine.git
 cd music-recommendation-engine
-python setup.py --dev
+pip install -e ".[dev]"
 
 # Run code quality checks
 black .
-flake8 .
+ruff check .
 python run_tests.py --coverage
 ```
 
