@@ -14,6 +14,10 @@ dependencies = [
     "joblib>=1.3",
     "pydantic>=2.5",
     "pydantic-settings>=2.1",
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    # TestClient (fastapi.testclient) needs httpx.
+    "httpx>=0.27",
     # Legacy only (legacy/web_app.py); remove when legacy/ is deleted.
     "flask>=2.0",
 ]

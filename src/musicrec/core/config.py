@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     # Application
     # ------------------------------------------------------------------
     app_name: str = "musicrec"
+    app_version: str = "0.1.0"
     environment: str = "development"
     debug: bool = False
 
@@ -43,10 +44,21 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     log_level: str = "INFO"
     log_format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    log_json: bool = True
     log_file_path: str | None = Field(
         default=None,
         validation_alias=AliasChoices("log_file_path", "log_file"),
     )
+
+    # ------------------------------------------------------------------
+    # CORS. List values are set as JSON arrays, e.g.
+    # CORS_ALLOWED_ORIGINS='["https://app.example.com"]'
+    # ------------------------------------------------------------------
+    cors_enabled: bool = True
+    cors_allowed_origins: list[str] = ["*"]
+    cors_allowed_methods: list[str] = ["*"]
+    cors_allowed_headers: list[str] = ["*"]
+    cors_allow_credentials: bool = False
 
     # ------------------------------------------------------------------
     # Legacy Flask web app (removed together with legacy/web_app.py)

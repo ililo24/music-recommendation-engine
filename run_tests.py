@@ -40,6 +40,7 @@ def main():
         pytest_args.append('tests/test_model_training.py')
     elif args.integration:
         pytest_args.append('tests/test_integration.py')
+        pytest_args.append('tests/integration')
     else:
         # Run all tests
         pytest_args.append('tests/')
@@ -51,4 +52,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
