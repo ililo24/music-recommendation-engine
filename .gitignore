@@ -30,6 +30,13 @@ env/
 *.pkl
 *.joblib
 
+# Storage (tenant-scoped files: uploaded datasets, model artifacts — rule 5)
+storage/
+
+# Local SQLite database (default DATABASE_URL for dev/tests)
+*.db
+*.sqlite3
+
 # Logs
 logs/
 *.log
