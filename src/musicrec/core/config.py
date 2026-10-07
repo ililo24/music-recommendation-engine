@@ -1,6 +1,6 @@
 """Application configuration.
 
-pydantic-settings based configuration (CONVENTION.md rule 3): every setting
+pydantic-settings based configuration (CONVENTIONS.md rule 3): every setting
 comes from an environment variable or a local ``.env`` file; nothing
 sensitive is hardcoded. This module replaces the legacy JSON-file config
 (``src/config.py``, now moved to ``legacy/``).
@@ -86,6 +86,23 @@ class Settings(BaseSettings):
     # Data limits (upload validation, rule 4)
     # ------------------------------------------------------------------
     max_memory_usage_mb: int = 1000
+
+    # ------------------------------------------------------------------
+    # Predictions
+    # ------------------------------------------------------------------
+    predict_max_batch_size: int = 100
+
+    # ------------------------------------------------------------------
+    # Model cache (in-memory LRU of deserialized artifacts, per process)
+    # ------------------------------------------------------------------
+    model_cache_max_size: int = 10
+
+    # ------------------------------------------------------------------
+    # Rate limiting (per API key, sliding window, per process)
+    # ------------------------------------------------------------------
+    rate_limit_enabled: bool = True
+    rate_limit_max_requests: int = 60
+    rate_limit_window_seconds: int = 60
 
 
 @lru_cache
