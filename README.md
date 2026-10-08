@@ -1,262 +1,226 @@
+# 🎵 MelodyAI — Music Recommendation SaaS
 
-# 🎵 Music Recommendation Engine
+A FastAPI-based music recommendation service (`musicrec`), refactored from the
+original [music-recommendation-engine](https://github.com/ililo24/music-recommendation-engine).
+The service scores user–track preference from listening behavior (completion
+rates, stream counts, rewind behavior) and serves the scores over a validated
+HTTP API. The original Flask web app and CLI are preserved, frozen, under
+`legacy/`.
 
-A sophisticated machine learning pipeline that predicts user music preferences based on listening behavior, completion rates, and audio features. Now with a complete web interface, comprehensive testing, and production-ready features!
+## 🏗️ Architecture
 
-## 🚀 Features
+- **api** — FastAPI application (`src/musicrec`), served by uvicorn on port 8000.
+  Pydantic schemas validate every request; model artifacts are loaded through a
+  thread-safe LRU cache backed by multi-tenant storage. Health endpoint:
+  `GET /api/v1/health`.
+- **worker** — planned RQ (Redis Queue) workers for async jobs (model training,
+  batch scoring), per the refactor plan in `src/musicrec/main.py`. The compose
+  service is a documented placeholder until the module exists.
+- **postgres** — PostgreSQL 16, provisioned by docker compose; reserved for
+  tenant/model persistence (not yet read by the application).
+- **redis** — Redis 7, provisioned by docker compose; reserved for the RQ task
+  queue and cross-process rate limiting (not yet read by the application).
 
-- **Real-time preference scoring** using completion rates and stream counts
-- **Advanced feature engineering** with temporal and engagement features
-- **Rewind behavior analysis** for high-engagement detection
+**Design rules** (see CONVENTIONS.md):
+
+- `musicrec.ml` is pure ML — it never reads config; callers pass settings
+  explicitly.
+- All configuration comes from environment variables via pydantic-settings;
+  nothing sensitive is hardcoded.
+- Batch-size limits are enforced at the endpoint from config, not in schemas.
+
+## ✨ Features
+
+- **Preference scoring** from completion rates, stream counts, and rewind behavior
+- **Feature engineering** — temporal, completion, categorical, and engagement features
 - **Time-series aware** train/test splitting
-- **Production-ready** ML pipeline with preprocessing
-- **🌐 Web Interface** - Upload data, train models, get recommendations
-- **🧪 Comprehensive Testing** - Unit tests, integration tests, coverage reports
-- **📊 Model Evaluation** - Detailed performance analysis and visualization
-- **⚙️ Configuration Management** - Environment-based config with validation
-- **📈 Data Visualization** - Interactive charts and insights
+- **Validated API** — single or batch prediction shapes, exactly one per request
+- **Request-id tracing** — `X-Request-ID` propagated to responses and every log line
+- **Thread-safe model cache** — LRU of deserialized artifacts, per process
+- **Per-key rate limiting** — sliding window, configurable via environment
+- **Structured JSON logging** with a plain-text fallback (`LOG_JSON=false`)
+- **12-factor configuration** — everything from env vars or a local `.env`
 
-## 📊 Model Performance
+## 📊 Model performance
 
-- **Cross-validation R²**: 0.85+
-- **Mean Absolute Error**: <5.0
-- **Feature Importance**: Completion rate, streams, time patterns
+**No performance numbers are claimed in this README.** Per repo policy
+(CONVENTIONS.md rule 10), any metric quoted here must be reproducible from a
+committed script (`scripts/benchmark.py`). Until that script and its output are
+checked in, measure on your own data:
+
+```bash
+python legacy/train.py --data data/raw/listening_history.csv
+```
 
 ## 🛠️ Tech Stack
 
-- **Python**: pandas, numpy, scikit-learn
-- **ML**: Random Forest, Feature Engineering
-- **Web**: Flask, Bootstrap, HTML/CSS/JS
-- **Testing**: pytest, coverage analysis
-- **Data**: Time-series analysis, Audio features
-- **Visualization**: matplotlib, seaborn
-
-## 📈 Key Insights
-
-- **Rewind behavior** is a strong positive signal for music preference
-- **Time-based patterns** significantly improve recommendation accuracy
-- **Completion rate** is more predictive than raw play counts
-
-## 🎯 Completed Features ✅
-
-- [x] **Web application interface** - Complete Flask-based web app
-- [x] **Comprehensive testing suite** - Unit, integration, and coverage tests
-- [x] **Model evaluation tools** - Performance analysis and visualization
-- [x] **Configuration management** - Environment-based settings
-- [x] **Data visualization** - Interactive charts and insights
-- [x] **CLI training script** - Command-line interface for model training
-- [x] **Production-ready structure** - Organized, documented, and maintainable
-
-## 🎯 Future Roadmap
-
-- [ ] Spotify API integration
-- [ ] Real-time recommendation engine
-- [ ] NLP mood recognition
-- [ ] Collaborative filtering
-- [ ] Docker containerization
-- [ ] API endpoints for mobile apps
+- **Language**: Python 3.11+
+- **API**: FastAPI, pydantic, pydantic-settings, uvicorn
+- **ML**: pandas, numpy, scikit-learn, joblib
+- **Infra**: Docker (multi-stage, non-root), docker compose, PostgreSQL 16, Redis 7
+- **Quality**: ruff, black, mypy, pre-commit, pytest with a coverage gate, GitHub Actions
 
 ## 📁 Project Structure
-```
-├── data/                    # Raw and processed data
-│   ├── raw/                # Original data files
-│   └── processed/          # Feature-engineered datasets
-├── models/                  # Trained models and metadata
-├── notebooks/               # Jupyter notebooks for analysis
-├── src/                    # Source code
-│   ├── feature_engineering.py  # Feature creation functions
-│   ├── model_training.py      # Model training pipeline
-│   ├── evaluation.py          # Model evaluation tools
-│   ├── visualization.py       # Data visualization utilities
-│   └── config.py             # Configuration management
-├── tests/                  # Comprehensive test suite
-│   ├── test_feature_engineering.py
-│   ├── test_model_training.py
-│   └── test_integration.py
-├── templates/              # Web interface templates
-├── static/                 # Web assets (CSS, JS)
-├── logs/                   # Application logs
-├── train.py               # CLI training script
-├── web_app.py             # Flask web application
-├── run_tests.py           # Test runner
-└── setup.py               # Project setup script
-```
 
+```
+├── .github/workflows/ci.yml   # CI: ruff, black, mypy, pytest (coverage gate)
+├── src/musicrec/              # The SaaS application package
+│   ├── api/v1/                # Routers (health, predictions, ...)
+│   ├── core/                  # config.py (pydantic-settings), logging.py
+│   ├── ml/                    # Pure ML: features, training, evaluation
+│   ├── schemas/               # pydantic request/response models
+│   ├── services/              # model cache, storage, visualization
+│   └── main.py                # FastAPI app assembly
+├── tests/                     # pytest suite (unit + integration)
+├── legacy/                    # Frozen pre-SaaS code (Flask app, CLI, old config)
+├── scripts/                   # (planned) benchmark.py and operational scripts
+├── data/                      # Raw and processed data
+├── models/                    # Trained model artifacts
+├── Dockerfile                 # Multi-stage, non-root image for the API
+├── docker-compose.yml         # api, worker, postgres, redis
+├── .env.example               # Template for all environment variables
+├── .pre-commit-config.yaml    # ruff, black, mypy, hygiene hooks
+├── pyproject.toml             # Packaging + tool configuration
+├── requirements.txt           # Legacy/notebook dependency pinning
+└── run_tests.py               # Local test runner helper
+```
 
 ## 🚀 Getting Started
 
-### Quick Setup (Recommended)
+### Run with Docker (recommended)
 
 ```bash
-# Clone the repository
 git clone https://github.com/ililo24/music-recommendation-engine.git
 cd music-recommendation-engine
 
-# Run automated setup
-python setup.py
+cp .env.example .env     # then set SECRET_KEY and POSTGRES_PASSWORD
 
-# Start the web interface
-python web_app.py
+docker compose up --build
 ```
 
-Visit `http://localhost:5000` to use the web interface!
+- Interactive OpenAPI docs: http://localhost:8000/docs
+- Health: http://localhost:8000/api/v1/health
 
-### Manual Setup
+> **Note on the worker service:** no worker module exists in the codebase yet,
+> so the `worker` container exits with `ModuleNotFoundError` by design — it is
+> included to document the target topology. Start everything else with
+> `docker compose up --build postgres redis api`, or simply ignore the exited
+> worker container.
 
-#### Prerequisites
-- Python 3.8+
-- pip
-
-#### Installation
+### Local development
 
 ```bash
-# Clone the repository
 git clone https://github.com/ililo24/music-recommendation-engine.git
 cd music-recommendation-engine
 
-# Install dependencies
-pip install -r requirements.txt
+pip install -e ".[dev]"     # package + pytest/pytest-cov, ruff, black, mypy
+cp .env.example .env
+pre-commit install          # wire up the git hooks
 
-# Create directories
-mkdir -p data/{raw,processed} models notebooks logs
-
-# Run tests
-python run_tests.py
+uvicorn musicrec.main:app --reload   # API on http://localhost:8000
 ```
 
-### Usage Options
+### Python API
 
-#### 1. Web Interface (Easiest)
-```bash
-python web_app.py
-```
-- Upload your CSV data
-- Train models with a few clicks
-- Get recommendations instantly
-- View performance metrics
-
-#### 2. Command Line Interface
-```bash
-# Train a model
-python train.py --data data/raw/listening_history.csv
-
-# Train with custom parameters
-python train.py --data data/raw/listening_history.csv --test-split 0.2 --model-name my_model
-
-# Make predictions
-python train.py --predict --model models/recommendation_model_20241023.pkl --data data/raw/new_data.csv
-```
-
-#### 3. Python API
 ```python
-from src.feature_engineering import apply_features, calculate_preference_score
-from src.model_training import train_model, evaluate_model
-from src.evaluation import ModelEvaluator
-from src.visualization import DataVisualizer
+import pandas as pd
+from musicrec.ml.features import apply_features, calculate_preference_score
+from musicrec.ml.training import train_model, evaluate_model
 
-# Load your data
-df = pd.read_csv('data/raw/your_data.csv')
+df = pd.read_csv("data/raw/your_data.csv")
+train_df, test_df = ...  # your split; time-based recommended (see legacy/train.py)
 
-# Apply feature engineering
 train_processed, test_processed = apply_features(train_df, test_df)
-
-# Calculate preference scores
 train_processed = calculate_preference_score(train_processed)
 
-# Train model
-model = train_model(train_processed)
-
-# Evaluate model
-evaluator = ModelEvaluator(model)
-metrics = evaluator.evaluate_performance(X_test, y_test)
-
-# Visualize data
-visualizer = DataVisualizer(df)
-visualizer.plot_listening_patterns()
+model = train_model(train_processed, test_processed)
+metrics = evaluate_model(model, test_processed)
 ```
 
-## 📊 Results
+See the module docstrings in `src/musicrec/ml/` for the full signatures,
+including `ModelEvaluator` for cross-validated performance analysis.
 
-The model achieves high accuracy in predicting user preferences by leveraging:
-- **Completion rates** as primary engagement signals
-- **Rewind behavior** for high-engagement detection
-- **Temporal patterns** for context-aware recommendations
+### Legacy web app & CLI
+
+The original Flask interface (CSV upload, one-click training, metrics
+dashboards) and the training CLI remain available as frozen code in `legacy/`:
+
+```bash
+python legacy/web_app.py                                            # Flask UI on :5000
+python legacy/train.py --data data/raw/listening_history.csv        # train
+python legacy/train.py --predict --model models/<model>.pkl --data data/raw/new_data.csv
+```
 
 ## 🧪 Testing
 
-Run the comprehensive test suite:
+```bash
+# Full suite with coverage (same 80% gate as CI)
+pytest --cov=musicrec --cov-report=term-missing --cov-fail-under=80
+
+# Or the helper script
+python run_tests.py --coverage
+```
+
+CI enforces a coverage gate: the build fails below **80%** coverage of the
+`musicrec` package (`--cov-fail-under=80`).
+
+## 🧹 Code Quality
+
+| Tool       | Purpose         | Command                        |
+|------------|-----------------|--------------------------------|
+| ruff       | Linting         | `ruff check .`                 |
+| black      | Formatting      | `black .`                      |
+| mypy       | Type checking   | `mypy src/musicrec`            |
+| pre-commit | Git hook runner | `pre-commit run --all-files`   |
+
+Install the hooks once per clone:
 
 ```bash
-# Run all tests
-python run_tests.py
-
-# Run with coverage
-python run_tests.py --coverage
-
-# Run specific test types
-python run_tests.py --unit
-python run_tests.py --integration
+pre-commit install
 ```
 
-## 📈 Data Visualization
-
-Explore your data with built-in visualization tools:
-
-```python
-from src.visualization import DataVisualizer
-
-# Create visualizer
-visualizer = DataVisualizer(df)
-
-# Generate comprehensive visualizations
-visualizer.plot_listening_patterns()
-visualizer.plot_audio_features()
-visualizer.plot_engagement_analysis()
-visualizer.plot_correlation_matrix()
-visualizer.plot_preference_analysis()
-
-# Generate data report
-visualizer.generate_data_report('data_report.json')
-```
+GitHub Actions (`.github/workflows/ci.yml`) runs ruff, black, mypy, and the
+pytest coverage gate on every push to `main` and on every pull request.
 
 ## ⚙️ Configuration
 
-Customize the system with environment variables or config files:
+All settings are read from environment variables (or a local `.env` file) by
+`src/musicrec/core/config.py`. See `.env.example` for the full annotated list.
+Highlights:
 
-```bash
-# Environment variables
-export MODEL_N_ESTIMATORS=300
-export TEST_SPLIT=0.25
-export LOG_LEVEL=DEBUG
+| Variable                    | Default              | Purpose                                 |
+|-----------------------------|----------------------|-----------------------------------------|
+| `SECRET_KEY`                | ⚠️ insecure default  | Signing secret — set a real one         |
+| `MODEL_N_ESTIMATORS`        | 200                  | Random forest size                      |
+| `MODEL_TEST_SPLIT`          | 0.2                  | Train/test split fraction               |
+| `PREDICT_MAX_BATCH_SIZE`    | 100                  | Max items per batch prediction          |
+| `MODEL_CACHE_MAX_SIZE`      | 10                   | LRU capacity for deserialized models    |
+| `RATE_LIMIT_MAX_REQUESTS`   | 60                   | Requests per window per API key         |
+| `RATE_LIMIT_WINDOW_SECONDS` | 60                   | Rate limit window length                |
+| `LOG_JSON`                  | true                 | Structured JSON logs                    |
 
-# Or edit config.json
-python -c "from src.config import create_sample_config; create_sample_config()"
-```
+Legacy variable names (`LOG_FILE`, `TEST_SPLIT`) are still honored as aliases.
 
-## 🌐 Web Interface Features
+## 🗺️ Roadmap
 
-- **📤 Data Upload**: Drag-and-drop CSV upload with validation
-- **🤖 Model Training**: One-click model training with progress tracking
-- **📊 Performance Dashboard**: Real-time metrics and visualizations
-- **🔮 Recommendations**: Instant preference scoring for any track
-- **📈 Analytics**: Comprehensive data exploration tools
+- [ ] RQ worker service (task queue) + redis-backed rate limiting
+- [ ] Persist tenants and model metadata in PostgreSQL
+- [ ] `scripts/benchmark.py` — reproducible metrics that may be quoted in this README
+- [ ] Auth phase: make `SECRET_KEY` required and drop the insecure default
+- [ ] Spotify API integration
+- [ ] Collaborative filtering
+- [ ] API endpoints for mobile apps
 
 ## 🤝 Contributing
 
-Open to contributions! This project aims to create better music recommendation algorithms.
-
-### Development Setup
 ```bash
-# Clone and setup for development
-git clone https://github.com/ililo24/music-recommendation-engine.git
-cd music-recommendation-engine
-python setup.py --dev
-
-# Run code quality checks
-black .
-flake8 .
-python run_tests.py --coverage
+pip install -e ".[dev]"
+pre-commit install
+pytest --cov=musicrec
 ```
+
+Keep `musicrec.ml` free of config reads — pass settings explicitly. Add or
+update tests with your changes; CI gates on 80% coverage.
 
 ## 📄 License
 

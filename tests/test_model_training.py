@@ -3,22 +3,22 @@ import pandas as pd
 import numpy as np
 import sys
 import os
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 
 # Add src to path for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from model_training import train_model, evaluate_model
+from musicrec.ml.training import train_model, evaluate_model
 
 
 class TestModelTraining:
     """Test model training functionality"""
-    
+
     def create_sample_data(self):
         """Create sample data for testing"""
         np.random.seed(42)
         n_samples = 100
-        
+
         data = {
             'ts': pd.date_range('2024-01-01', periods=n_samples, freq='H'),
             'ms_played': np.random.randint(10000, 300000, n_samples),
@@ -53,83 +53,72 @@ class TestModelTraining:
             'streams': np.random.randint(1, 50, n_samples),
             'preference_score': np.random.uniform(0, 100, n_samples)
         }
-        
+
         return pd.DataFrame(data)
-    
-    @patch('model_training.joblib.dump')
-    @patch('os.makedirs')
-    def test_train_model_basic(self, mock_makedirs, mock_dump):
+
+    def test_train_model_basic(self):
         """Test basic model training"""
         train_df = self.create_sample_data()
-        
-        # Mock the model saving
-        mock_dump.return_value = None
-        
+
         model = train_model(train_df)
-        
+
         # Check that model is returned
         assert model is not None
         assert hasattr(model, 'fit')
         assert hasattr(model, 'predict')
-        
-        # Check that model was saved
-        mock_dump.assert_called_once()
-        
+
     def test_train_model_with_test_data(self):
         """Test model training with test data"""
         train_df = self.create_sample_data()
         test_df = self.create_sample_data()
-        
-        with patch('model_training.joblib.dump') as mock_dump:
-            model = train_model(train_df, test_df)
-            
-            # Model should still be trained on training data
-            assert model is not None
-            
+
+        model = train_model(train_df, test_df)
+
+        # Model should still be trained on training data
+        assert model is not None
+
     def test_train_model_feature_columns(self):
         """Test that model uses correct feature columns"""
         train_df = self.create_sample_data()
-        
-        with patch('model_training.joblib.dump') as mock_dump:
-            model = train_model(train_df)
-            
-            # Check that target column is not in features
-            X_train = train_df.drop(columns=['preference_score'])
-            y_train = train_df['preference_score']
-            
-            # Model should be able to fit
-            model.fit(X_train, y_train)
-            
-            # Should be able to predict
-            predictions = model.predict(X_train.head(5))
-            assert len(predictions) == 5
-            
+
+        model = train_model(train_df)
+
+        # Check that target column is not in features
+        X_train = train_df.drop(columns=['preference_score'])
+        y_train = train_df['preference_score']
+
+        # Model should be able to fit
+        model.fit(X_train, y_train)
+
+        # Should be able to predict
+        predictions = model.predict(X_train.head(5))
+        assert len(predictions) == 5
+
     def test_train_model_missing_features(self):
         """Test model training with missing features"""
         train_df = self.create_sample_data()
-        
+
         # Remove some features
         train_df = train_df.drop(columns=['danceability', 'energy'])
-        
-        with patch('model_training.joblib.dump') as mock_dump:
-            # Should handle missing features gracefully
-            try:
-                model = train_model(train_df)
-                # If it doesn't fail, check that it still works
-                assert model is not None
-            except KeyError:
-                # Expected behavior for missing required features
-                pass
+
+        # Should handle missing features gracefully
+        try:
+            model = train_model(train_df)
+            # If it doesn't fail, check that it still works
+            assert model is not None
+        except (KeyError, ValueError):
+            # Expected behavior for missing required features
+            pass
 
 
 class TestModelEvaluation:
     """Test model evaluation functionality"""
-    
+
     def create_sample_data(self):
         """Create sample data for testing"""
         np.random.seed(42)
         n_samples = 50
-        
+
         data = {
             'ms_played': np.random.randint(10000, 300000, n_samples),
             'duration_ms': np.random.randint(60000, 300000, n_samples),
@@ -160,55 +149,55 @@ class TestModelEvaluation:
             'streams': np.random.randint(1, 50, n_samples),
             'preference_score': np.random.uniform(0, 100, n_samples)
         }
-        
+
         return pd.DataFrame(data)
-    
+
     def test_evaluate_model_basic(self):
         """Test basic model evaluation"""
         test_df = self.create_sample_data()
-        
+
         # Create a mock model
         mock_model = MagicMock()
         mock_model.predict.return_value = np.random.uniform(0, 100, len(test_df))
-        
+
         metrics = evaluate_model(mock_model, test_df)
-        
+
         # Check that metrics are returned
         assert 'mse' in metrics
         assert 'mae' in metrics
         assert 'r2' in metrics
-        
+
         # Check that metrics are numeric
         assert isinstance(metrics['mse'], (int, float))
         assert isinstance(metrics['mae'], (int, float))
         assert isinstance(metrics['r2'], (int, float))
-        
+
     def test_evaluate_model_perfect_predictions(self):
         """Test evaluation with perfect predictions"""
         test_df = self.create_sample_data()
-        
+
         # Create a mock model that returns perfect predictions
         mock_model = MagicMock()
         mock_model.predict.return_value = test_df['preference_score'].values
-        
+
         metrics = evaluate_model(mock_model, test_df)
-        
+
         # Perfect predictions should give R² = 1.0
         assert metrics['r2'] == 1.0
         assert metrics['mse'] == 0.0
         assert metrics['mae'] == 0.0
-        
+
     def test_evaluate_model_custom_target(self):
         """Test evaluation with custom target column"""
         test_df = self.create_sample_data()
         test_df['custom_target'] = test_df['preference_score'] + 10
-        
+
         # Create a mock model
         mock_model = MagicMock()
         mock_model.predict.return_value = np.random.uniform(0, 100, len(test_df))
-        
+
         metrics = evaluate_model(mock_model, test_df, target='custom_target')
-        
+
         # Should work with custom target
         assert 'mse' in metrics
         assert 'mae' in metrics
@@ -217,4 +206,3 @@ class TestModelEvaluation:
 
 if __name__ == "__main__":
     pytest.main([__file__])
-

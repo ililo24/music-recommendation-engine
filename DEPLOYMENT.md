@@ -42,7 +42,7 @@ Your **gorgeous, production-ready** music recommendation engine with:
 
 2. **Configure**:
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `gunicorn --config gunicorn.conf.py web_app:app`
+   - **Start Command**: `gunicorn --config gunicorn.conf.py legacy.web_app:app`
    - **Environment**: Python 3.11
 
 3. **Deploy**:
